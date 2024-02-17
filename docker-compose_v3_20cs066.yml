@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  gpu-20cs066:
+    image: nvcr.io/nvidia/tensorflow:23.09-tf2-py3
+    container_name: 20cs066
+    restart: always
+    ports:
+      - 9006:8888
+    volumes:
+      - /raid/home/20cs066:/workspace
+    environment:
+      - JUPYTER_TOKEN=password
+    command: sh -c "pip install jupyter jupyterlab && jupyter lab --allow-root --ip=0.0.0.0"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
