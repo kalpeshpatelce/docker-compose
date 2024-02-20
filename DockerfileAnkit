@@ -1,0 +1,53 @@
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV TZ Etc/UTC
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib64
+ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig/
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES all
+ENV FFMPEG_BINARY /usr/local/bin/ffmpeg
+ENV CUDA_HOME=/usr/local/cuda-12.1
+
+RUN apt -y update && \
+    apt install -y \
+    libass-dev \
+    libfdk-aac-dev \
+    librtmp-dev \
+    libssl-dev \    
+    libvdpau1 \
+    libvorbis-dev \
+    libvpx-dev \
+    libx264-dev \
+    libx265-dev
+
+RUN apt -y install build-essential cmake gcc git libc6 libc6-dev libtool nasm yasm curl
+
+WORKDIR /src
+
+RUN set -e && \
+    mkdir -p /src && \
+    git clone https://git.ffmpeg.org/ffmpeg.git /src/ffmpeg && \
+    cd /src/ffmpeg && \
+    ./configure && \
+    make -j$(nproc) && \
+    make install && \
+    make distclean && \
+    hash -r
+
+RUN apt-get -y install \
+    python3.11 \
+    python3-pip
+
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+RUN python -m pip install torch
+
+# Install Jupyter and JupyterLab
+RUN pip install jupyter && pip install jupyterlab
+
+# Define environment variable for Jupyter token
+ENV JUPYTER_TOKEN Pr0ject@123
+
+# Run JupyterLab when the container launches
+CMD ["jupyter", "lab", "--allow-root", "--ip=0.0.0.0"]

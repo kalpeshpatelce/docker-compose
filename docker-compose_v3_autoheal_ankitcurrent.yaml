@@ -1,0 +1,28 @@
+version: '3.9'
+services:
+  gpu-ankit:
+    build:
+      context: .
+      dockerfile: DockerfileAnkit
+    environment:
+      - JUPYTER_TOKEN=Password
+    command: sh -c "pip install jupyter && pip install jupyterlab && jupyter lab --allow-root --ip=0.0.0.0"
+    ports:
+      - "9003:8888"
+    volumes:
+      - /raid/home/ankit:/src:rw
+    container_name: ankit
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "test -s `which nvidia-smi` && nvidia-smi || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
