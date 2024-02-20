@@ -47,7 +47,7 @@ RUN python -m pip install torch
 RUN pip install jupyter && pip install jupyterlab
 
 # Define environment variable for Jupyter token
-ENV JUPYTER_TOKEN Pr0ject@123
+ENV JUPYTER_TOKEN Password
 
 # Run JupyterLab when the container launches
 CMD ["jupyter", "lab", "--allow-root", "--ip=0.0.0.0"]
