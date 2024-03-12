@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  genuin-dev:
+    image: genuin-development
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "22"
+    volumes:
+      - .:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    shm_size: 16g
+    environment:
+      - DISPLAY=host.docker.internal:0
+    networks:
+      - genuin
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  genuin-vpn:
+    image: genuin-vpn
+    build:
+      context: .
+      dockerfile: Dockerfile.vpn
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - "22"
+    volumes:
+      - ./vpn:/vpn
+    environment:
+      - VPN_FILE=prod-development.ovpn
+    networks:
+      - genuin
+    restart: unless-stopped
+
+  remote-it:
+    image: remoteit/docker-extension:latest
+    container_name: genuin-charusat-remoteit
+    hostname: remoteit
+    volumes:
+      - $PWD/remoteit:/etc/remoteit
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - R3_REGISTRATION_CODE="xxxxxxxxxxxxxxxxxxxxxx"
+    restart: unless-stopped
+    networks:
+      - genuin
+
+networks:
+  genuin:
+    driver: bridge

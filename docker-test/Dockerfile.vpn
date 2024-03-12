@@ -1,0 +1,24 @@
+FROM ubuntu:22.04
+
+RUN apt update && apt install -y openvpn openssh-server
+
+RUN mkdir -p /dev/net && mknod /dev/net/tun c 10 200 && chmod 600 /dev/net/tun
+
+COPY vpn /vpn
+
+RUN mkdir /var/run/sshd
+RUN echo 'root:password' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# Optional: Uncomment to disable password authentication in SSH
+# RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+EXPOSE 22
+
+RUN echo '#!/bin/sh\n\
+service ssh start\n\
+openvpn --config /vpn/$VPN_FILE\n\
+' > /start.sh && chmod +x /start.sh
+
+# Use the startup script as the entry point
+CMD ["/start.sh"]
